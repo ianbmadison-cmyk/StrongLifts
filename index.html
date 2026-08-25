@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#14171c">
+  <meta name="description" content="Simple StrongLifts 5x5 workout tracker with assistance work and automatic progression.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <title>StrongLifts Tracker</title>
+  <style>
+    :root{
+      color-scheme:light dark;
+      --bg:#f4f6f8;--card:#fff;--text:#15181d;--muted:#69707b;--line:#dfe3e8;
+      --soft:#eaedf1;--button:#1c2128;--buttonText:#fff;--ok:#dff5e7;--bad:#fde3e3;
+      --accent:#e9eefc;
+    }
+    @media (prefers-color-scheme:dark){
+      :root{--bg:#0e1013;--card:#171a1f;--text:#f3f4f6;--muted:#aeb5bf;--line:#30353d;
+      --soft:#1c2026;--button:#f4f5f7;--buttonText:#15171a;--ok:#173425;--bad:#3a1f22;--accent:#222a3b;}
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    button,input{font:inherit}
+    button{touch-action:manipulation}
+    .app{max-width:820px;margin:0 auto;padding:18px 14px 36px}
+    .top{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px}
+    .eyebrow{font-size:12px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+    h1{font-size:25px;line-height:1.1;margin:5px 0 5px}
+    .sub{color:var(--muted);font-size:14px;line-height:1.45;max-width:560px}
+    .pill{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 11px;font-size:13px;font-weight:750;white-space:nowrap}
+    .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;background:var(--soft);padding:5px;border-radius:14px;margin-bottom:15px}
+    .tab{border:0;background:transparent;color:inherit;border-radius:10px;min-height:45px;font-size:15px;font-weight:800}
+    .tab.active{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.09)}
+    .panel{display:none}.panel.active{display:block}
+    .summary,.card{background:var(--card);border:1px solid var(--line);border-radius:16px}
+    .summary{padding:16px;display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:12px}
+    .summary h2{font-size:21px;margin:0 0 4px}.summary p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+    .workout-tag{background:var(--accent);border-radius:12px;padding:10px 12px;font-weight:850;white-space:nowrap}
+    .list{display:grid;gap:10px}.exercise{padding:15px}
+    .exercise-top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+    .name{font-size:17px;font-weight:850}.scheme,.mini{font-size:12px;color:var(--muted);margin-top:3px}
+    .weight{text-align:right}.weight strong{display:block;font-size:21px}.weight span{font-size:11px;color:var(--muted)}
+    .provisional{color:#a66b00;font-size:11px;font-weight:850;margin-top:3px}
+    .sets{display:flex;gap:8px;flex-wrap:wrap}.setbtn{min-width:50px;min-height:46px;border:1px solid var(--line);border-radius:12px;background:var(--soft);color:inherit;font-weight:850}
+    .setbtn.ok{background:var(--ok)}.setbtn.bad{background:var(--bad)}
+    .legend,.notice{color:var(--muted);font-size:12px;line-height:1.45;margin:10px 2px 14px}
+    .actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.primary,.secondary{min-height:47px;border-radius:12px;font-weight:850;padding:0 16px}
+    .primary{border:0;background:var(--button);color:var(--buttonText)}.primary:disabled{opacity:.4}.secondary{border:1px solid var(--line);background:var(--card);color:inherit}
+    .status{font-size:12px;color:var(--muted)}
+    .section-title{font-size:13px;font-weight:850;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:20px 2px 10px}
+    .progress{display:grid;gap:8px}.prow{display:grid;grid-template-columns:minmax(120px,1.4fr) repeat(3,minmax(75px,1fr));gap:8px;align-items:center;padding:12px 13px}
+    .prow.header{border:0;background:transparent;padding-top:2px;padding-bottom:2px;font-size:10px;font-weight:850;text-transform:uppercase;color:var(--muted)}
+    .metric strong{display:block}.metric span{font-size:10px;color:var(--muted)}
+    .history{display:grid;gap:8px}.hitem{padding:13px 14px;display:flex;justify-content:space-between;gap:12px}.hitem small{color:var(--muted)}
+    .settings-card{padding:16px;margin-bottom:11px}.settings-card h3{font-size:17px;margin:0 0 4px}.settings-card>p{color:var(--muted);font-size:13px;line-height:1.45;margin:0 0 13px}
+    .fields{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:9px;align-items:end;margin-bottom:10px}
+    label{font-size:12px;font-weight:750;color:var(--muted)}
+    input[type=number]{width:100%;min-height:44px;margin-top:5px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:inherit;padding:8px 10px;font-size:16px}
+    .days{display:flex;gap:7px;flex-wrap:wrap}.day{min-width:48px;min-height:44px;border-radius:11px;border:1px solid var(--line);background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:850}
+    .day input{position:absolute;opacity:0}.day.on{background:var(--accent)}
+    .rule{font-size:13px;line-height:1.5;background:var(--soft);border-radius:12px;padding:12px 13px;margin-top:11px}
+    .install{display:none;margin-bottom:12px}.install.show{display:block}
+    .install .card{padding:14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .install strong{font-size:14px}.install small{display:block;color:var(--muted);margin-top:2px}
+    @media(max-width:590px){
+      .summary{align-items:flex-start;flex-direction:column}.fields{grid-template-columns:1fr 1fr}.fields .labelcell{grid-column:1/-1}
+      .prow{grid-template-columns:minmax(95px,1.2fr) repeat(3,minmax(62px,1fr));gap:5px;padding:10px 8px}.prow.header{font-size:9px}.metric strong{font-size:13px}
+      h1{font-size:23px}
+    }
+  </style>
+</head>
+<body>
+<main class="app">
+  <div class="top">
+    <div>
+      <div class="eyebrow">StrongLifts 5×5 + assistance</div>
+      <h1>Workout tracker</h1>
+      <div class="sub">Your next workout, working weights and progression — designed to be one-tap simple at the gym.</div>
+    </div>
+    <div class="pill" id="scheduleBadge">Mon · Wed · Fri</div>
+  </div>
+
+  <div id="installBox" class="install">
+    <div class="card">
+      <div><strong>Install on your phone</strong><small>Add this tracker to your Android home screen.</small></div>
+      <button class="secondary" type="button" id="installBtn">Install</button>
+    </div>
+  </div>
+
+  <nav class="tabs" aria-label="Sections">
+    <button class="tab active" type="button" data-tab="today">Today</button>
+    <button class="tab" type="button" data-tab="progress">Progress</button>
+    <button class="tab" type="button" data-tab="setup">Setup</button>
+  </nav>
+
+  <section id="today" class="panel active">
+    <div class="summary">
+      <div><h2 id="nextDate">Next workout</h2><p id="nextDesc"></p></div>
+      <div class="workout-tag" id="workoutTag">Workout B</div>
+    </div>
+    <div id="exerciseList" class="list"></div>
+    <div class="legend">Tap each set once for ✓ completed, twice for × missed, and again to clear.</div>
+    <div class="actions">
+      <button id="finishBtn" class="primary" type="button" disabled>Finish workout</button>
+      <button id="clearBtn" class="secondary" type="button">Clear set marks</button>
+      <span id="status" class="status" aria-live="polite">Mark every set to finish.</span>
+    </div>
+  </section>
+
+  <section id="progress" class="panel">
+    <div class="section-title">Progression</div>
+    <div id="progressGrid" class="progress"></div>
+    <div class="section-title">Workout history</div>
+    <div id="history" class="history"></div>
+  </section>
+
+  <section id="setup" class="panel">
+    <div class="card settings-card">
+      <h3>Training days</h3>
+      <p>Used to show your next scheduled session. Reliable scheduled phone notifications would require a later push-notification service.</p>
+      <div id="days" class="days"></div>
+    </div>
+
+    <div class="card settings-card">
+      <h3>Working weights</h3>
+      <p>Squat, bench and row already reflect your successful Workout A on Monday. Confirm the Workout B weights before Wednesday.</p>
+      <div id="weightFields"></div>
+      <div class="rule"><strong>Progression:</strong> complete every prescribed rep → add the increment next time. Miss any reps → repeat the weight. Three unsuccessful attempts at the same weight → deload 10%, rounded to the nearest 2.5 kg.</div>
+    </div>
+
+    <div class="card settings-card">
+      <h3>Programme</h3>
+      <p><strong>A:</strong> Squat 5×5 · Bench 5×5 · Row 5×5 · Pull-up 3×8 · Hanging knee raises 3×8</p>
+      <p><strong>B:</strong> Squat 5×5 · Overhead press 5×5 · Deadlift 1×5 · Barbell curl 3×8 · Plank 3×30 sec</p>
+      <button id="resetBtn" class="secondary" type="button">Reset app data</button>
+      <div class="notice">Workout data is saved on this device in your browser. It remains available when you close and reopen the installed app, but clearing browser/site data will erase it.</div>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const STORAGE_KEY = 'stronglifts_tracker_v1';
+  const defaultState = {
+    nextWorkout:'B',
+    days:[1,3,5],
+    marks:{},
+    lifts:{
+      squat:{name:'Squat',weight:22.5,increment:2.5,best:20,fails:0,confirmed:true},
+      bench:{name:'Bench Press',weight:42.5,increment:2.5,best:40,fails:0,confirmed:true},
+      row:{name:'Barbell Row',weight:42.5,increment:2.5,best:40,fails:0,confirmed:true},
+      press:{name:'Overhead Press',weight:20,increment:2.5,best:0,fails:0,confirmed:false},
+      deadlift:{name:'Deadlift',weight:40,increment:5,best:0,fails:0,confirmed:false},
+      curl:{name:'Barbell Curl',weight:20,increment:2.5,best:0,fails:0,confirmed:false}
+    },
+    history:[
+      {date:'2026-08-24',workout:'A',summary:'Squat 20 kg ✓ · Bench Press 40 kg ✓ · Barbell Row 40 kg ✓'}
+    ]
+  };
+  const plan = {
+    A:[
+      {id:'squat',name:'Squat',sets:5,scheme:'5 × 5',type:'weighted'},
+      {id:'bench',name:'Bench Press',sets:5,scheme:'5 × 5',type:'weighted'},
+      {id:'row',name:'Barbell Row',sets:5,scheme:'5 × 5',type:'weighted'},
+      {id:'pullup',name:'Pull-up',sets:3,scheme:'3 × 8',type:'bodyweight'},
+      {id:'kneeraise',name:'Hanging Knee Raises',sets:3,scheme:'3 × 8',type:'bodyweight'}
+    ],
+    B:[
+      {id:'squat',name:'Squat',sets:5,scheme:'5 × 5',type:'weighted'},
+      {id:'press',name:'Overhead Press',sets:5,scheme:'5 × 5',type:'weighted'},
+      {id:'deadlift',name:'Deadlift',sets:1,scheme:'1 × 5',type:'weighted'},
+      {id:'curl',name:'Barbell Curl',sets:3,scheme:'3 × 8',type:'weighted'},
+      {id:'plank',name:'Plank',sets:3,scheme:'3 × 30 sec',type:'time'}
+    ]
+  };
+
+  function clone(x){return JSON.parse(JSON.stringify(x))}
+  function load(){
+    try{
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      return saved && saved.lifts && saved.history ? saved : clone(defaultState);
+    }catch(e){ return clone(defaultState); }
+  }
+  let state=load();
+  const save=()=>localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  const $=s=>document.querySelector(s);
+  const kg=v=>`${Number(v)%1===0?Number(v).toFixed(0):Number(v).toFixed(1)} kg`;
+  const roundPlate=v=>Math.max(0,Math.round(v/2.5)*2.5);
+  const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dayLong=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  function parseDateOnly(s){
+    const [y,m,d]=s.split('-').map(Number);
+    return new Date(Date.UTC(y,m-1,d));
+  }
+  function fmtDate(s){
+    return new Intl.DateTimeFormat(undefined,{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}).format(parseDateOnly(s));
+  }
+  function todayDateOnly(){
+    const d=new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function nextSchedule(){
+    const now=new Date(), today=now.getDay();
+    if(state.days.includes(today)) return {offset:0,day:today};
+    for(let i=1;i<=7;i++) if(state.days.includes((today+i)%7)) return {offset:i,day:(today+i)%7};
+    return {offset:0,day:today};
+  }
+  function nextDateLabel(){
+    const n=nextSchedule(), d=new Date();
+    d.setDate(d.getDate()+n.offset);
+    const label=new Intl.DateTimeFormat(undefined,{weekday:'long',day:'numeric',month:'long'}).format(d);
+    return label;
+  }
+  function current(){return plan[state.nextWorkout]}
+  function markKey(id,i){return `${state.nextWorkout}:${id}:${i}`}
+
+  function renderHeader(){
+    $('#scheduleBadge').textContent=state.days.map(d=>dayNames[d]).join(' · ');
+    $('#workoutTag').textContent=`Workout ${state.nextWorkout}`;
+    $('#nextDate').textContent=nextDateLabel();
+    const n=nextSchedule();
+    $('#nextDesc').textContent=n.offset===0?`Scheduled training day today · Workout ${state.nextWorkout}`:`Next scheduled session · Workout ${state.nextWorkout}`;
+  }
+
+  function renderWorkout(){
+    renderHeader();
+    const list=$('#exerciseList'); list.innerHTML='';
+    current().forEach(ex=>{
+      const card=document.createElement('article'); card.className='card exercise';
+      let target='Bodyweight', sub='Complete prescribed reps', provisional='';
+      if(ex.type==='weighted'){
+        const l=state.lifts[ex.id]; target=kg(l.weight);
+        sub=l.confirmed?`Next on success: ${kg(l.weight+l.increment)}`:'Confirm this starting weight in Setup';
+        provisional=l.confirmed?'':'<div class="provisional">PROVISIONAL</div>';
+      } else if(ex.type==='time'){target='30 sec';sub='per set'}
+      card.innerHTML=`<div class="exercise-top"><div><div class="name">${ex.name}</div><div class="scheme">${ex.scheme}</div>${provisional}</div><div class="weight"><strong>${target}</strong><span>${sub}</span></div></div><div class="sets"></div>`;
+      const sets=card.querySelector('.sets');
+      for(let i=0;i<ex.sets;i++){
+        const key=markKey(ex.id,i), s=state.marks[key]||0;
+        const b=document.createElement('button'); b.type='button'; b.className=`setbtn ${s===1?'ok':s===2?'bad':''}`;
+        b.textContent=s===1?`Set ${i+1} ✓`:s===2?`Set ${i+1} ×`:`Set ${i+1}`;
+        b.addEventListener('click',()=>{state.marks[key]=(s+1)%3;save();renderWorkout()});
+        sets.appendChild(b);
+      }
+      list.appendChild(card);
+    });
+    const keys=[]; current().forEach(ex=>{for(let i=0;i<ex.sets;i++)keys.push(markKey(ex.id,i))});
+    const all=keys.every(k=>state.marks[k]===1||state.marks[k]===2);
+    const misses=keys.filter(k=>state.marks[k]===2).length;
+    $('#finishBtn').disabled=!all;
+    $('#status').textContent=!all?'Mark every set to finish.':misses?`${misses} missed set${misses===1?'':'s'} recorded.`:'All sets complete — progression ready.';
+  }
+
+  function renderProgress(){
+    const box=$('#progressGrid');
+    box.innerHTML='<div class="prow header"><div>Exercise</div><div>Next</div><div>After success</div><div>Fails</div></div>';
+    ['squat','bench','row','press','deadlift','curl'].forEach(id=>{
+      const l=state.lifts[id], r=document.createElement('div'); r.className='card prow';
+      r.innerHTML=`<div><strong>${l.name}</strong><div class="mini">Best: ${l.best?kg(l.best):'—'}</div></div><div class="metric"><strong>${kg(l.weight)}</strong><span>${l.confirmed?'current':'provisional'}</span></div><div class="metric"><strong>${kg(l.weight+l.increment)}</strong><span>next</span></div><div class="metric"><strong>${l.fails}/3</strong><span>at weight</span></div>`;
+      box.appendChild(r);
+    });
+    const h=$('#history'); h.innerHTML='';
+    state.history.forEach(item=>{
+      const r=document.createElement('div'); r.className='card hitem';
+      r.innerHTML=`<div><strong>Workout ${item.workout}</strong><br><small>${item.summary||'Workout completed'}</small></div><small>${fmtDate(item.date)}</small>`;
+      h.appendChild(r);
+    });
+  }
+
+  function renderSetup(){
+    const days=$('#days'); days.innerHTML='';
+    [1,2,3,4,5,6,0].forEach(d=>{
+      const lab=document.createElement('label'); lab.className=`day ${state.days.includes(d)?'on':''}`;
+      lab.innerHTML=`<input type="checkbox" value="${d}" ${state.days.includes(d)?'checked':''}>${dayNames[d]}`;
+      lab.querySelector('input').addEventListener('change',e=>{
+        const val=Number(e.target.value);
+        if(e.target.checked && !state.days.includes(val)) state.days.push(val);
+        if(!e.target.checked && state.days.length>1) state.days=state.days.filter(x=>x!==val);
+        if(!state.days.length) state.days=[val];
+        save();renderSetup();renderHeader();
+      });
+      days.appendChild(lab);
+    });
+    const f=$('#weightFields'); f.innerHTML='';
+    ['squat','bench','row','press','deadlift','curl'].forEach(id=>{
+      const l=state.lifts[id], row=document.createElement('div'); row.className='fields';
+      row.innerHTML=`<div class="labelcell"><strong>${l.name}</strong>${l.confirmed?'':'<div class="provisional">NEEDS CONFIRMATION</div>'}</div><label>Next weight<input type="number" min="0" max="500" step="0.5" data-id="${id}" data-field="weight" value="${l.weight}"></label><label>Increment<input type="number" min="0" max="20" step="0.5" data-id="${id}" data-field="increment" value="${l.increment}"></label>`;
+      f.appendChild(row);
+    });
+    f.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{
+      const l=state.lifts[inp.dataset.id], field=inp.dataset.field, n=Number(inp.value);
+      if(Number.isFinite(n)&&n>=0){
+        l[field]=Math.round(n*2)/2;
+        if(field==='weight') l.confirmed=true;
+        save();renderSetup();renderWorkout();renderProgress();
+      }
+    }));
+  }
+
+  function finish(){
+    const w=state.nextWorkout, summary=[];
+    current().forEach(ex=>{
+      const success=Array.from({length:ex.sets},(_,i)=>state.marks[markKey(ex.id,i)]).every(v=>v===1);
+      if(ex.type==='weighted'){
+        const l=state.lifts[ex.id], attempted=l.weight;
+        if(success){
+          l.best=Math.max(l.best,attempted); l.fails=0; l.weight=roundPlate(attempted+l.increment);
+          summary.push(`${ex.name} ${kg(attempted)} ✓`);
+        }else{
+          l.fails++;
+          if(l.fails>=3){l.weight=roundPlate(attempted*.9);l.fails=0;summary.push(`${ex.name} ${kg(attempted)} → deload ${kg(l.weight)}`)}
+          else summary.push(`${ex.name} ${kg(attempted)} → repeat`);
+        }
+      }
+    });
+    state.history.unshift({date:todayDateOnly(),workout:w,summary:summary.join(' · ')});
+    state.history=state.history.slice(0,100);
+    state.nextWorkout=w==='A'?'B':'A'; state.marks={}; save();
+    renderWorkout();renderProgress();renderSetup();
+    $('#status').textContent=`Workout ${w} saved. Next is Workout ${state.nextWorkout}.`;
+  }
+
+  $('#finishBtn').addEventListener('click',finish);
+  $('#clearBtn').addEventListener('click',()=>{state.marks={};save();renderWorkout()});
+  $('#resetBtn').addEventListener('click',()=>{
+    if(confirm('Reset all workout data on this device?')){state=clone(defaultState);save();renderAll()}
+  });
+
+  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===btn));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===btn.dataset.tab));
+    if(btn.dataset.tab==='progress') renderProgress();
+    if(btn.dataset.tab==='setup') renderSetup();
+  }));
+
+  let deferredPrompt=null;
+  window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault();deferredPrompt=e;$('#installBox').classList.add('show');
+  });
+  $('#installBtn').addEventListener('click',async()=>{
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt=null;$('#installBox').classList.remove('show');
+  });
+  window.addEventListener('appinstalled',()=>$('#installBox').classList.remove('show'));
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  }
+
+  function renderAll(){renderWorkout();renderProgress();renderSetup()}
+  renderAll();
+})();
+</script>
+</body>
+</html>
